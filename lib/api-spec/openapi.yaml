@@ -1,0 +1,377 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: EMPOWERMENT Theater Ticket Reservation System
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: reservations
+    description: Ticket reservation operations
+  - name: admin
+    description: Admin operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /reservations:
+    post:
+      operationId: createReservation
+      tags: [reservations]
+      summary: Create a ticket reservation
+      description: Creates a reservation, generates QR code, and sends confirmation email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationInput"
+      responses:
+        "201":
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already reserved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/{token}:
+    get:
+      operationId: getReservationByToken
+      tags: [reservations]
+      summary: Validate a ticket by token
+      description: Returns reservation details for QR code validation
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reservation found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "404":
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /reservations/{token}/check-in:
+    patch:
+      operationId: checkInReservation
+      tags: [reservations]
+      summary: Check in a reservation
+      description: Marks a reservation as checked in (requires admin key)
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInInput"
+      responses:
+        "200":
+          description: Checked in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Already checked in or invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/reservations/{id}:
+    patch:
+      operationId: updateReservation
+      tags: [admin]
+      summary: Edit a reservation
+      description: Updates reservation fields (requires admin key in body)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationUpdate"
+      responses:
+        "200":
+          description: Updated reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteReservation
+      tags: [admin]
+      summary: Delete a reservation
+      description: Permanently deletes a reservation (requires admin key in body)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminKeyInput"
+      responses:
+        "204":
+          description: Deleted successfully
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/reservations:
+    get:
+      operationId: listReservations
+      tags: [admin]
+      summary: List all reservations
+      description: Returns all reservations (requires admin key via query param)
+      parameters:
+        - name: adminKey
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reservation"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [reservations]
+      summary: Get ticket statistics
+      description: Returns public statistics about reservations
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Reservation:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - ticketCount
+        - token
+        - checkedIn
+        - createdAt
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        ticketCount:
+          type: integer
+        specialNeeds:
+          type: ["string", "null"]
+        token:
+          type: string
+        checkedIn:
+          type: boolean
+        checkedInAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ReservationInput:
+      type: object
+      required:
+        - name
+        - email
+        - ticketCount
+      properties:
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        ticketCount:
+          type: integer
+          minimum: 1
+          maximum: 10
+        specialNeeds:
+          type: string
+
+    CheckInInput:
+      type: object
+      required:
+        - adminKey
+      properties:
+        adminKey:
+          type: string
+
+    AdminKeyInput:
+      type: object
+      required:
+        - adminKey
+      properties:
+        adminKey:
+          type: string
+
+    ReservationUpdate:
+      type: object
+      required:
+        - adminKey
+      properties:
+        adminKey:
+          type: string
+        name:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        ticketCount:
+          type: integer
+          minimum: 1
+          maximum: 10
+        specialNeeds:
+          type: ["string", "null"]
+        checkedIn:
+          type: boolean
+
+    Stats:
+      type: object
+      required:
+        - totalReservations
+        - totalTickets
+        - totalCheckedIn
+      properties:
+        totalReservations:
+          type: integer
+        totalTickets:
+          type: integer
+        totalCheckedIn:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
