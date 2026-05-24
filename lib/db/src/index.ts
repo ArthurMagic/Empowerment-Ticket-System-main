@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 
 // Load environment variables from root .env
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+dotenv.config();
 // @ts-ignore: Could not find type declarations for 'drizzle-orm/node-postgres'
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
