@@ -7,44 +7,20 @@ interface TicketEmailOptions {
   ticketCount: number;
   specialNeeds?: string | null;
   token: string;
-  qrCodeDataUrl: string;
+  qrCodeDataUrl: string; // Erwartet weiterhin den String "data:image/png;base64,..."
 }
 
 export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Promise<void> {
-  // [DEBUG 1] Funktionsstart & Parameter-Check
-  logger.info(
-    { 
-      to: opts.to, 
-      name: opts.name, 
-      ticketCount: opts.ticketCount, 
-      token: opts.token,
-      specialNeeds: opts.specialNeeds,
-      qrCodeDataSize: opts.qrCodeDataUrl ? `${opts.qrCodeDataUrl.length} Zeichen` : "Fehlt/Leer"
-    }, 
-    "[DEBUG 1/7] Funktion 'sendTicketConfirmationEmail' aufgerufen."
-  );
+  logger.info({ to: opts.to, token: opts.token }, "[DEBUG 1/7] Funktion aufgerufen.");
 
   const gmailUser = process.env["GMAIL_USER"];
   const gmailPass = process.env["GMAIL_PASS"];
 
-  // [DEBUG 2] Überprüfung der .env Variablen
-  logger.info(
-    { 
-      GMAIL_USER_exists: !!gmailUser, 
-      GMAIL_USER_value: gmailUser || null,
-      GMAIL_PASS_exists: !!gmailPass,
-      GMAIL_PASS_length: gmailPass ? gmailPass.length : 0
-    }, 
-    "[DEBUG 2/7] Umgebungsvariablen aus der .env.local ausgelesen."
-  );
-
   if (!gmailUser || !gmailPass) {
-    logger.warn("[DEBUG ABBRUCH] GMAIL_USER oder GMAIL_PASS fehlt in den Umgebungsvariablen — Abbruch!");
+    logger.warn("[DEBUG ABBRUCH] GMAIL_USER oder GMAIL_PASS fehlt.");
     return;
   }
 
-  // [DEBUG 3] Transporter-Konfiguration initialisieren
-  logger.info("[DEBUG 3/7] Initialisiere Nodemailer SMTP-Transporter für den Service 'gmail'...");
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -53,73 +29,47 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
     },
   });
 
-  // [DEBUG 4] Verbindungstest zu Google (Verify)
   try {
-    logger.info("[DEBUG 4/7] Teste SMTP-Verbindung und Zugangsdaten bei Google (transporter.verify)...");
     await transporter.verify();
-    logger.info("[DEBUG 4a/7] Google SMTP-Verbindung erfolgreich hergestellt und authentifiziert!");
+    logger.info("[DEBUG 4/7] SMTP-Verbindung zu Google steht.");
   } catch (verifyError) {
-    logger.error(
-      { error: verifyError instanceof Error ? verifyError.message : String(verifyError) }, 
-      "[DEBUG ERROR] Google hat die Zugangsdaten oder die Verbindung abgelehnt!"
-    );
-    throw verifyError; // Wir brechen direkt ab, da das Senden sowieso fehlschlagen würde
+    logger.error({ error: verifyError }, "[DEBUG ERROR] Google-Login fehlgeschlagen.");
+    throw verifyError;
   }
 
-  // [DEBUG 5] HTML-Template bauen
-  logger.info("[DEBUG 5/7] Starte Generierung des HTML-Mail-Inhalts via buildEmailHtml()...");
+  // WICHTIG: buildEmailHtml braucht den QR-Code-String hier NICHT mehr direkt,
+  // da wir im HTML jetzt fest auf die CID verweisen!
   const emailHtml = buildEmailHtml(opts);
-  logger.info(
-    { htmlTotalLength: emailHtml.length }, 
-    "[DEBUG 5a/7] HTML-Inhalt erfolgreich gerendert."
-  );
-
   const subject = `Deine Reservierung für EMPOWERMENT – ${opts.ticketCount} Ticket${opts.ticketCount > 1 ? "s" : ""}`;
-  logger.info({ subject }, "[DEBUG 6/7] Betreffzeile generiert.");
-
-  // [DEBUG 6] Sendevorgang ausführen
-  logger.info(
-    { from: `"EMPOWERMENT Tickets" <${gmailUser}>`, to: opts.to }, 
-    "[DEBUG 6a/7] Sende Mail-Befehl an Google SMTP ab..."
-  );
 
   try {
-    const info = await transporter.sendMail({
+    logger.info("[DEBUG 6/7] Sende Mail inkl. CID-QR-Code-Attachment an Google...");
+    
+    await transporter.sendMail({
       from: `"EMPOWERMENT Tickets" <${gmailUser}>`,
       to: opts.to,
       subject: subject,
       html: emailHtml,
+      // HIER IST DIE MAGIE: Nodemailer wandelt die Data-URL automatisch in einen 
+      // echten Mail-Anhang um, den der Client dank 'cid' direkt im HTML anzeigt!
+      attachments: [
+        {
+          filename: "ticket-qrcode.png",
+          path: opts.qrCodeDataUrl, // Nodemailer versteht "data:image/png;base64,..." als Pfad
+          cid: "ticket-qrcode",     // Diese ID muss exakt mit dem src-Attribut im HTML übereinstimmen
+        },
+      ],
     });
 
-    // [DEBUG 7] Erfolgs-Log mit Google Server-Antwort
-    logger.info(
-      { 
-        messageId: info.messageId, 
-        response: info.response, 
-        accepted: info.accepted, 
-        rejected: info.rejected 
-      }, 
-      "[DEBUG 7/7] Google hat die E-Mail entgegengenommen!"
-    );
-
-    logger.info({ to: opts.to, token: opts.token }, "Ticket confirmation email sent via Gmail");
+    logger.info({ to: opts.to }, "[DEBUG 7/7] E-Mail wurde von Google akzeptiert und gesendet!");
   } catch (error) {
-    // Ausgiebiges Fehler-Debugging
-    logger.error(
-      { 
-        errorName: error instanceof Error ? error.name : "UnknownError",
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-        to: opts.to 
-      }, 
-      "[DEBUG ERROR] Kritischer Fehler im Sendevorgang (transporter.sendMail)!"
-    );
+    logger.error({ error }, "[DEBUG ERROR] Fehler beim Senden!");
     throw new Error(`Email send failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
 function buildEmailHtml(opts: TicketEmailOptions): string {
-  const { name, ticketCount, specialNeeds, qrCodeDataUrl } = opts;
+  const { name, ticketCount, specialNeeds } = opts; // qrCodeDataUrl wird hier nicht mehr im String interpoliert
   const eventDate = "30. Juni 2026, 19:00 Uhr";
   const eventLocation = "Haus der Jugend Charlottenburg, Zillestr. 54, 10585 Berlin";
 
@@ -197,7 +147,9 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
                 <tr>
                   <td align="center" style="padding:24px;background:#fafafa;border-radius:12px;border:2px dashed #e91e8c;margin-bottom:32px;">
                     <p style="margin:0 0 16px 0;font-size:14px;font-weight:700;color:#c2185b;text-transform:uppercase;letter-spacing:0.1em;">Dein Ticket-QR-Code</p>
-                    <img src="${qrCodeDataUrl}" alt="QR Code" width="200" height="200" style="display:block;margin:0 auto;" />
+                    
+                    <img src="cid:ticket-qrcode" alt="QR Code" width="200" height="200" style="display:block;margin:0 auto;" />
+                    
                     <p style="margin:16px 0 0 0;font-size:12px;color:#999;">Zeige diesen QR-Code am Einlass vor</p>
                   </td>
                 </tr>
