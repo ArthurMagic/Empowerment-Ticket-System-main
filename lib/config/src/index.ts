@@ -2,7 +2,7 @@
  * Central configuration for Empowerment Ticket System
  */
 
-export const maxTickets = 4;
+export const maxTickets = 3;
 
 // Add more config options here as needed
 // Example:
