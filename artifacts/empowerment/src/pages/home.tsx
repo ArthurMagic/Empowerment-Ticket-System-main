@@ -166,7 +166,7 @@ console.log("Max Tickets:", maxTickets);
               <h3 className="text-2xl font-bold text-white mb-8 uppercase tracking-wider">Tickets Reservieren</h3>
               {statsLoading ? (
                 <p className="text-muted-foreground">Lädt...</p>
-              ) : stats?.totalTickets ?? maxTickets >= maxTickets  ? (
+              ) : stats?.totalTickets !== undefined && stats.totalTickets >= maxTickets ? (
                 <div className="space-y-4">
                   <p className="text-xl text-white font-medium">Leider wurden bereits alle verfügbaren Tickets reserverviert.</p>
                   <p className="text-xl text-white font-medium">Kontaktieren Sie uns gerne per <a href="mailto:projekt@zille54.de" className="text-primary hover:underline">projekt@zille54.de</a> oder <a href="tel:03090291775" className="text-primary hover:underline">030 90291775</a> und wir probieren Ihrem Wunsch nachzukommen.</p>
