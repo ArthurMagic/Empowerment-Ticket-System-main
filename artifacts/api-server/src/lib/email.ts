@@ -7,12 +7,13 @@ interface TicketEmailOptions {
   ticketCount: number;
   specialNeeds?: string | null;
   token: string;
-  qrCodeDataUrl: string; // Erwartet weiterhin den String "data:image/png;base64,..."
+  qrCodeDataUrl: string;
 }
 
 export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Promise<void> {
   logger.info({ to: opts.to, token: opts.token }, "[DEBUG 1/7] Funktion aufgerufen.");
 
+  // Zurück zu den Gmail-Variablen
   const gmailUser = process.env["GMAIL_USER"];
   const gmailPass = process.env["GMAIL_PASS"];
 
@@ -25,7 +26,7 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
     service: "gmail",
     auth: {
       user: gmailUser,
-      pass: gmailPass,
+      pass: gmailPass, // WICHTIG: Hier muss dein 16-stelliges Google App-Passwort rein!
     },
   });
 
@@ -37,31 +38,45 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
     throw verifyError;
   }
 
-  // WICHTIG: buildEmailHtml braucht den QR-Code-String hier NICHT mehr direkt,
-  // da wir im HTML jetzt fest auf die CID verweisen!
   const emailHtml = buildEmailHtml(opts);
-  const subject = `Deine Reservierung für EMPOWERMENT – ${opts.ticketCount} Ticket${opts.ticketCount > 1 ? "s" : ""}`;
+  
+  // ANTI-SPAM-TRICK 1: Der Betreff enthält jetzt eine einzigartige Referenz-Nummer (die ersten 6 Zeichen des Tokens)
+  // Dadurch ist für Google jede Mail ein individueller Vorgang und kein Massen-Spam.
+  const shortToken = opts.token.slice(0, 6).toUpperCase();
+  const subject = `[Ref: ${shortToken}] Deine Reservierung für EMPOWERMENT – ${opts.ticketCount} Ticket${opts.ticketCount > 1 ? "s" : ""}`;
 
   try {
-    logger.info("[DEBUG 6/7] Sende Mail inkl. CID-QR-Code-Attachment an Google...");
+    logger.info("[DEBUG 6/7] Sende Mail via Gmail SMTP...");
     
+    const base64Data = opts.qrCodeDataUrl.includes(",") 
+      ? opts.qrCodeDataUrl.split(",")[1] 
+      : opts.qrCodeDataUrl;
+
     await transporter.sendMail({
       from: `"EMPOWERMENT Tickets" <${gmailUser}>`,
       to: opts.to,
       subject: subject,
       html: emailHtml,
-      // HIER IST DIE MAGIE: Nodemailer wandelt die Data-URL automatisch in einen 
-      // echten Mail-Anhang um, den der Client dank 'cid' direkt im HTML anzeigt!
       attachments: [
         {
-          filename: "ticket-qrcode.png",
-          path: opts.qrCodeDataUrl, // Nodemailer versteht "data:image/png;base64,..." als Pfad
-          cid: "ticket-qrcode",     // Diese ID muss exakt mit dem src-Attribut im HTML übereinstimmen
+          filename: "ticket-qrcode-inline.png",
+          content: base64Data,
+          encoding: "base64",
+          contentType: "image/png",
+          cid: "ticket-qrcode",
+          disposition: "inline",
+        },
+        {
+          filename: `EMPOWERMENT-Ticket-${shortToken}.png`,
+          content: base64Data,
+          encoding: "base64",
+          contentType: "image/png",
+          disposition: "attachment",
         },
       ],
     });
 
-    logger.info({ to: opts.to }, "[DEBUG 7/7] E-Mail wurde von Google akzeptiert und gesendet!");
+    logger.info({ to: opts.to }, "[DEBUG 7/7] E-Mail wurde von Google gesendet!");
   } catch (error) {
     logger.error({ error }, "[DEBUG ERROR] Fehler beim Senden!");
     throw new Error(`Email send failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -69,9 +84,12 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
 }
 
 function buildEmailHtml(opts: TicketEmailOptions): string {
-  const { name, ticketCount, specialNeeds } = opts; // qrCodeDataUrl wird hier nicht mehr im String interpoliert
+  const { name, ticketCount, specialNeeds, token } = opts;
   const eventDate = "30. Juni 2026, 19:00 Uhr";
   const eventLocation = "Haus der Jugend Charlottenburg, Zillestr. 54, 10585 Berlin";
+  
+  // ANTI-SPAM-TRICK 2: Ein einzigartiger Zeitstempel und Token im Footer
+  const timestamp = new Date().toISOString();
 
   return `<!DOCTYPE html>
 <html lang="de">
@@ -163,6 +181,7 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
                     <p style="margin:0;font-size:12px;color:#999;line-height:1.6;">
                       <strong>Datenschutzhinweis:</strong> Deine Daten (Name, E-Mail, Ticketanzahl) werden ausschließlich zur Verwaltung deiner Reservierung verwendet und nach der Veranstaltung gelöscht. Veranstalter: Jugendamt Charlottenburg-Wilmersdorf &amp; Jugendclubring Berlin e.V.
                     </p>
+                    <p style="margin:8px 0 0 0;font-size:10px;color:#ccc;">ID: ${token} | T: ${timestamp}</p>
                   </td>
                 </tr>
               </table>
