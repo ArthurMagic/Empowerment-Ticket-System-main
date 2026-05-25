@@ -13,7 +13,6 @@ interface TicketEmailOptions {
 export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Promise<void> {
   logger.info({ to: opts.to, token: opts.token }, "[DEBUG 1/7] Funktion aufgerufen.");
 
-  // Zurück zu den Gmail-Variablen
   const gmailUser = process.env["GMAIL_USER"];
   const gmailPass = process.env["GMAIL_PASS"];
 
@@ -26,7 +25,7 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
     service: "gmail",
     auth: {
       user: gmailUser,
-      pass: gmailPass, // WICHTIG: Hier muss dein 16-stelliges Google App-Passwort rein!
+      pass: gmailPass,
     },
   });
 
@@ -39,9 +38,6 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
   }
 
   const emailHtml = buildEmailHtml(opts);
-  
-  // ANTI-SPAM-TRICK 1: Der Betreff enthält jetzt eine einzigartige Referenz-Nummer (die ersten 6 Zeichen des Tokens)
-  // Dadurch ist für Google jede Mail ein individueller Vorgang und kein Massen-Spam.
   const shortToken = opts.token.slice(0, 6).toUpperCase();
   const subject = `[Ref: ${shortToken}] Deine Reservierung für EMPOWERMENT – ${opts.ticketCount} Ticket${opts.ticketCount > 1 ? "s" : ""}`;
 
@@ -63,15 +59,13 @@ export async function sendTicketConfirmationEmail(opts: TicketEmailOptions): Pro
           content: base64Data,
           encoding: "base64",
           contentType: "image/png",
-          cid: "ticket-qrcode",
-          disposition: "inline",
+          cid: "ticket-qrcode", // Durch das 'cid' weiß Nodemailer automatisch, dass es "inline" gehört
         },
         {
           filename: `EMPOWERMENT-Ticket-${shortToken}.png`,
           content: base64Data,
           encoding: "base64",
-          contentType: "image/png",
-          disposition: "attachment",
+          contentType: "image/png", // Ohne 'cid' wird es automatisch ein normaler Download-Anhang
         },
       ],
     });
@@ -87,8 +81,6 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
   const { name, ticketCount, specialNeeds, token } = opts;
   const eventDate = "30. Juni 2026, 19:00 Uhr";
   const eventLocation = "Haus der Jugend Charlottenburg, Zillestr. 54, 10585 Berlin";
-  
-  // ANTI-SPAM-TRICK 2: Ein einzigartiger Zeitstempel und Token im Footer
   const timestamp = new Date().toISOString();
 
   return `<!DOCTYPE html>
