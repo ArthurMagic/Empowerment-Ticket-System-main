@@ -149,7 +149,7 @@ console.log("Max Tickets:", maxTickets);
           </div>
 
           <div className="space-y-4 text-sm text-muted-foreground/80">
-            <p><strong className="text-white">Veranstalter:</strong> Jugendamt Charlottenburg-Wilmersdorf & Jugendclubring Berlin e.V.</p>
+            <p><strong className="text-white">Veranstalter:</strong> Jugendamt Charlottenburg-Wilmersdorf, Jugendclubring Berlin e.V. & Kinder- und Jugendparlament Charlottenburg-Wilmersdorf</p>
             <p><strong className="text-white">Schirmherrschaft:</strong> Bezirksstadtrat Simon Hertel</p>
             <p><strong className="text-white">In Anwesenheit von:</strong> Bezirksbürgermeisterin Kerstin Bauch & Bürgermeister Francesco Ianeselli (Trento)</p>
             <p><strong className="text-white">Kontext:</strong> 60-jährige Städtepartnerschaft Charlottenburg-Wilmersdorf ↔ Trento</p>

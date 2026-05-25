@@ -183,7 +183,7 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
           <tr>
             <td style="background:#1a0a1a;padding:24px 40px;text-align:center;border-radius:0 0 16px 16px;">
               <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;">
-                Jugendamt Charlottenburg-Wilmersdorf · Jugendclubring Berlin e.V.<br/>
+                Jugendamt Charlottenburg-Wilmersdorf · Jugendclubring Berlin e.V. · Kinder- und Jugendparlament Charlottenburg-Wilmersdorf<br/>
                 Unter der Schirmherrschaft von Bezirksstadtrat Simon Hertel<br/>
                 Haus der Jugend Charlottenburg · Zillestr. 54 · 10585 Berlin
               </p>
