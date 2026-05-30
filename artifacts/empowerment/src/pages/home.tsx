@@ -33,8 +33,7 @@ export default function Home() {
    const { data: stats, isLoading: statsLoading } = useGetStats({
     query: { queryKey: getGetStatsQueryKey() },
   });
-console.log("Max Tickets:", maxTickets);
-  console.log("Aktuelle Stats:", stats, "Loading:", statsLoading);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
