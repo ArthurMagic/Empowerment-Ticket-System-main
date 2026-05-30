@@ -98,10 +98,10 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
 
           <tr>
             <td style="background:linear-gradient(135deg,#c2185b,#e91e8c,#ff69b4);padding:48px 40px;text-align:center;border-radius:16px 16px 0 0;">
-              <p style="margin:0 0 8px 0;font-size:13px;font-weight:700;letter-spacing:0.2em;color:rgba(255,255,255,0.7);text-transform:uppercase;">Internationale Begegnung · Trento-Berlin 2026</p>
+              <p style="margin:0 0 8px 0;font-size:13px;font-weight:700;letter-spacing:0.2em;color:rgba(255,255,255,0.7);text-transform:uppercase;">Internationaler Austausch · Trento-Berlin 2026</p>
               <h1 style="margin:0;font-size:52px;font-weight:900;color:#fff;letter-spacing:-2px;line-height:1;">EMPOWER</h1>
               <h1 style="margin:0 0 8px 0;font-size:52px;font-weight:900;color:#fff;letter-spacing:-2px;line-height:1;">MENT</h1>
-              <p style="margin:16px 0 0 0;font-size:15px;color:rgba(255,255,255,0.85);">Barbie · KEN · Power</p>
+              <p style="margin:16px 0 0 0;font-size:15px;color:rgba(255,255,255,0.85);">BARBIE · KEN · POWER</p>
             </td>
           </tr>
 
@@ -160,7 +160,7 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
                     
                     <img src="cid:ticket-qrcode" alt="QR Code" width="200" height="200" style="display:block;margin:0 auto;" />
                     
-                    <p style="margin:16px 0 0 0;font-size:12px;color:#999;">Zeige diesen QR-Code am Einlass vor</p>
+                    <p style="margin:16px 0 0 0;font-size:12px;color:#999;">Zeige diesen QR-Code ggf. am Einlass vor</p>
                   </td>
                 </tr>
               </table>
@@ -183,8 +183,7 @@ function buildEmailHtml(opts: TicketEmailOptions): string {
           <tr>
             <td style="background:#1a0a1a;padding:24px 40px;text-align:center;border-radius:0 0 16px 16px;">
               <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;">
-                Jugendamt Charlottenburg-Wilmersdorf · Jugendclubring Berlin e.V. · Kinder- und Jugendparlament Charlottenburg-Wilmersdorf<br/>
-                Unter der Schirmherrschaft von Bezirksstadtrat Simon Hertel<br/>
+                Jugendamt Charlottenburg-Wilmersdorf · Jugendclubring Berlin e.V.<br/>
                 Haus der Jugend Charlottenburg · Zillestr. 54 · 10585 Berlin
               </p>
             </td>

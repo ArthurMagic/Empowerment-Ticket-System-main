@@ -149,9 +149,9 @@ console.log("Max Tickets:", maxTickets);
           </div>
 
           <div className="space-y-4 text-sm text-muted-foreground/80">
-            <p><strong className="text-white">Veranstalter:</strong> Jugendamt Charlottenburg-Wilmersdorf, Jugendclubring Berlin e.V. & Kinder- und Jugendparlament Charlottenburg-Wilmersdorf</p>
+            <p><strong className="text-white">Veranstalter:</strong> Jugendamt Charlottenburg-Wilmersdorf, Jugendclubring Berlin e.V.</p>
             <p><strong className="text-white">Schirmherrschaft:</strong> Bezirksstadtrat Simon Hertel</p>
-            <p><strong className="text-white">In Anwesenheit von:</strong> Bezirksbürgermeisterin Kerstin Bauch & Bürgermeister Francesco Ianeselli (Trento)</p>
+            <p><strong className="text-white">In Anwesenheit von:</strong> Bezirksbürgermeisterin Kirstin Bauch & Bürgermeister Francesco Ianeselli (Trento)</p>
             <p><strong className="text-white">Kontext:</strong> 60-jährige Städtepartnerschaft Charlottenburg-Wilmersdorf ↔ Trento</p>
             <p className="pt-4 border-t border-border mt-4">
               Fragen? Kontaktieren Sie uns: <a href="tel:030902912775" className="text-primary hover:underline">030 902912775</a> oder <a href="mailto:projekt@zille54.de" className="text-primary hover:underline">projekt@zille54.de</a>
